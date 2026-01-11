@@ -8,7 +8,7 @@ import sys
 # Ajouter le répertoire du projet au path Python
 sys.path.insert(0, os.path.dirname(__file__))
 
-from backend.app import create_app
+from backend.application import create_app
 
 if __name__ == '__main__':
     # Obtenir le nom de l'environnement
