@@ -25,6 +25,20 @@ def create_app(config_name='default'):
     # Charger la configuration
     app.config.from_object(config[config_name])
 
+    # DEBUG: Afficher les chemins utilisés (utile pour diagnostiquer les problèmes de base de données)
+    from pathlib import Path
+    print("\n" + "="*60)
+    print("CONFIGURATION DE LA BASE DE DONNÉES")
+    print("="*60)
+    print(f"CWD (Current Working Directory) = {Path.cwd()}")
+    print(f"SQLALCHEMY_DATABASE_URI = {app.config.get('SQLALCHEMY_DATABASE_URI')}")
+    if hasattr(config[config_name], 'BASE_DIR'):
+        print(f"BASE_DIR calculé = {config[config_name].BASE_DIR}")
+    if hasattr(config[config_name], 'DATABASE_PATH'):
+        print(f"DATABASE_PATH = {config[config_name].DATABASE_PATH}")
+        print(f"Le fichier existe ? {config[config_name].DATABASE_PATH.exists()}")
+    print("="*60 + "\n")
+
     # Initialiser CORS
     CORS(app)
 

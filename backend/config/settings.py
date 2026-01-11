@@ -14,7 +14,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Config:
     """Base configuration"""
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR}/database/qhse.db')
+
+    # Créer le dossier database s'il n'existe pas
+    DATABASE_DIR = BASE_DIR / 'database'
+    DATABASE_DIR.mkdir(exist_ok=True)
+
+    # Construire l'URI de la base de données de manière compatible Windows/Linux
+    # SQLite nécessite 3 slashes après sqlite: pour un chemin absolu
+    DATABASE_PATH = DATABASE_DIR / 'qhse.db'
+
+    # Utiliser as_posix() pour convertir les backslashes Windows en forward slashes
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', f'sqlite:///{DATABASE_PATH.as_posix()}')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Upload settings
