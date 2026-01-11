@@ -10,7 +10,7 @@ import Layout from './components/Layout/Layout';
 // Pages
 import Dashboard from './pages/Dashboard';
 import DUERPList from './pages/DUERPList';
-import DUERPDetail from './pages/DUERPDetail';
+import DUERPDetailPremium from './pages/DUERPDetailPremium';
 import CreateDUERP from './pages/CreateDUERP';
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/duerp" element={<DUERPList />} />
             <Route path="/duerp/nouveau" element={<CreateDUERP />} />
-            <Route path="/duerp/:id" element={<DUERPDetail />} />
+            <Route path="/duerp/:id" element={<DUERPDetailPremium />} />
           </Routes>
         </Layout>
       </Router>
