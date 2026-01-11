@@ -5,8 +5,8 @@ Script de lancement de l'application QHSE
 import os
 import sys
 
-# Ajouter le répertoire backend au path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+# Ajouter le répertoire du projet au path Python
+sys.path.insert(0, os.path.dirname(__file__))
 
 from backend.app import create_app
 

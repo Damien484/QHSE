@@ -5,9 +5,9 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-from app.models import db
-from app.routes import duerp_bp, unite_bp, risque_bp, mesure_bp
-from config.settings import config
+from backend.app.models import db
+from backend.app.routes import duerp_bp, unite_bp, risque_bp, mesure_bp
+from backend.config.settings import config
 
 
 def create_app(config_name='default'):
