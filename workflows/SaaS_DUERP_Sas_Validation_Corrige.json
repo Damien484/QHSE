@@ -1,0 +1,159 @@
+{
+  "name": "SaaS_DUERP_Sas_Validation_Corrigé",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "duerp-observation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-duerp",
+      "name": "Webhook DUERP",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [256, 304],
+      "webhookId": "duerp-observation"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst required = ['client_id','ut_id','risque_id','frequence_terrain','gravite_terrain'];\nfor (const f of required) { if (!body[f]) throw new Error('Champ manquant: ' + f); }\nconst freq = parseInt(body.frequence_terrain);\nconst grav = parseInt(body.gravite_terrain);\nif (freq<1||freq>4||grav<1||grav>4) throw new Error('frequence/gravite entre 1 et 4');\nreturn [{json:{\n  client_id: body.client_id,\n  ut_id: body.ut_id,\n  situation_id: body.risque_id,\n  frequence_terrain: freq,\n  gravite_terrain: grav,\n  criticite_terrain: freq * grav,\n  notes: body.notes || null,\n  timestamp: new Date().toISOString()\n}}];"
+      },
+      "id": "valider-donnees",
+      "name": "Valider Donnees",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [464, 304]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Valider Donnees').item.json;\nreturn [{json: {\n  client_id: v.client_id,\n  ut_id: v.ut_id,\n  situation_id: v.situation_id,\n  frequence_terrain: v.frequence_terrain,\n  gravite_terrain: v.gravite_terrain,\n  photo_url: null,\n  notes: v.notes,\n  statut: 'en_attente'\n}}];"
+      },
+      "id": "prep-obs",
+      "name": "Preparer Corps Observation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [656, 304]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://okdocfsvvpxnuautfkbs.supabase.co/rest/v1/observations_terrain",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer TON_TOKEN_ICI" },
+            { "name": "apikey", "value": "TON_TOKEN_ICI" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}"
+      },
+      "id": "insert-observation",
+      "name": "Insert Observation Terrain",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [864, 304]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Valider Donnees').item.json;\nconst obsRaw = $('Insert Observation Terrain').item.json;\nconst obs = Array.isArray(obsRaw) ? obsRaw[0] : obsRaw;\nreturn [{json: {\n  client_id: v.client_id,\n  ut_id: v.ut_id,\n  situation_id: v.situation_id,\n  observation_id: obs.id,\n  frequence: v.frequence_terrain,\n  gravite: v.gravite_terrain,\n  photo_url: null,\n  statut: 'a_valider'\n}}];"
+      },
+      "id": "prep-duerp",
+      "name": "Preparer Corps DUERP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1056, 304]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://okdocfsvvpxnuautfkbs.supabase.co/rest/v1/evaluations_duerp",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer TON_TOKEN_ICI" },
+            { "name": "apikey", "value": "TON_TOKEN_ICI" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}"
+      },
+      "id": "insert-duerp",
+      "name": "Insert DUERP Brouillon",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1264, 304]
+    },
+    {
+      "parameters": {
+        "jsCode": "const v = $('Valider Donnees').item.json;\nconst obsRaw = $('Insert Observation Terrain').item.json;\nconst duerpRaw = $('Insert DUERP Brouillon').item.json;\nconst obs = Array.isArray(obsRaw) ? obsRaw[0] : obsRaw;\nconst duerp = Array.isArray(duerpRaw) ? duerpRaw[0] : duerpRaw;\nreturn [{json:{\n  success: true,\n  observation_id: obs.id,\n  evaluation_id: duerp.id,\n  criticite: v.criticite_terrain,\n  message: 'Observation enregistree et soumise a validation'\n}}];"
+      },
+      "id": "prep-response",
+      "name": "Preparer Reponse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1456, 304]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "reponse-webhook",
+      "name": "Reponse Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1664, 304]
+    },
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [256, 550]
+    },
+    {
+      "parameters": {
+        "jsCode": "const errorInfo = $input.first().json.error;\nreturn [{json: {\n  success: false,\n  message: \"Erreur lors de l'enregistrement.\",\n  details: errorInfo.message || \"Erreur inconnue\"\n}}];"
+      },
+      "id": "format-error",
+      "name": "Formater Erreur",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [464, 550]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 400,
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "reponse-erreur",
+      "name": "Reponse Erreur Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [656, 550]
+    }
+  ],
+  "connections": {
+    "Webhook DUERP": { "main": [ [ { "node": "Valider Donnees", "type": "main", "index": 0 } ] ] },
+    "Valider Donnees": { "main": [ [ { "node": "Preparer Corps Observation", "type": "main", "index": 0 } ] ] },
+    "Preparer Corps Observation": { "main": [ [ { "node": "Insert Observation Terrain", "type": "main", "index": 0 } ] ] },
+    "Insert Observation Terrain": { "main": [ [ { "node": "Preparer Corps DUERP", "type": "main", "index": 0 } ] ] },
+    "Preparer Corps DUERP": { "main": [ [ { "node": "Insert DUERP Brouillon", "type": "main", "index": 0 } ] ] },
+    "Insert DUERP Brouillon": { "main": [ [ { "node": "Preparer Reponse", "type": "main", "index": 0 } ] ] },
+    "Preparer Reponse": { "main": [ [ { "node": "Reponse Webhook", "type": "main", "index": 0 } ] ] },
+    "Error Trigger": { "main": [ [ { "node": "Formater Erreur", "type": "main", "index": 0 } ] ] },
+    "Formater Erreur": { "main": [ [ { "node": "Reponse Erreur Webhook", "type": "main", "index": 0 } ] ] }
+  }
+}
